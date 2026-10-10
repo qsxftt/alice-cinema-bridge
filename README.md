@@ -166,7 +166,6 @@ alice-cinema-bridge/
 ├── pair_projector.py          # Скрипт спаривания с Android TV / Проектором
 ├── switch_target.py           # Переключатель вывода (Проектор <-> ПК)
 ├── laptop_receiver.py         # Фоновый плеер для ПК (VLC)
-├── power_off_projector.py     # Мягкое выключение проектора
 ├── tailscale_watchdog.sh      # Сторожевой скрипт самовосстановления
 ├── tailscale-watchdog.service # systemd юнит сторожа
 ├── tailscale-watchdog.timer   # systemd таймер сторожа (каждые 60 сек)
