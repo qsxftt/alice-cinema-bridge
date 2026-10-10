@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Tailscale Funnel & Cinema Bridge Watchdog periodically
+After=network.target
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=60s
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

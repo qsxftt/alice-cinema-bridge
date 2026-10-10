@@ -1,0 +1,14 @@
+[Unit]
+Description=Tailscale Funnel & Cinema Bridge Watchdog
+After=network-online.target tailscaled.service cinema-bridge.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/home/danil/cinema_bridge/tailscale_watchdog.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

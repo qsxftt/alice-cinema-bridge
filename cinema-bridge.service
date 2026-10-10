@@ -1,0 +1,14 @@
+[Unit]
+Description=Alice Cinema Bridge Webhook
+After=network.target
+
+[Service]
+Type=simple
+User=danil
+WorkingDirectory=/home/danil/cinema_bridge
+ExecStart=/usr/bin/python3 -u /home/danil/cinema_bridge/cinema_webhook.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

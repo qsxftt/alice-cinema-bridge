@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.bak*
+*.tmp
+venv/
+.venv/
+env/
+
+# Environment and secrets
+.env
+*.pem
+*.crt
+*.key
+pin.txt
+
+# Runtime caches and state
+playback_target.txt
+tv_cache.json
+*.log
