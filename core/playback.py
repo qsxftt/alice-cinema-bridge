@@ -3,7 +3,6 @@
 core/playback.py - Взаимодействие с TorrServer, выбор нужной серии, отправка интента на Проектор / ПК и очистка
 """
 
-import os
 import re
 import json
 import time

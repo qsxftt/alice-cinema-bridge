@@ -6,13 +6,16 @@ HomeServer & Alice Cinema Bridge - Главная точка входа вебх
 """
 
 import io
-import os
+import re
+import socket
+import ipaddress
 import sys
 import json
 import time
 import threading
 import urllib.parse
 import urllib.request
+import urllib.error
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
 # Корректный вывод UTF-8 в консоли
@@ -24,7 +27,7 @@ if sys.stdout.encoding != 'utf-8':
 from core.config import (
     SERVER_LAN_IP, SERVER_PORT, SECRET_TOKEN, ALWAYS_CONFIRM, PROXY_CHANNELS,
     get_playback_target, set_playback_target,
-    get_pending_playback, set_pending_playback, pop_pending_playback,
+    set_pending_playback, pop_pending_playback,
     active_disambiguations, disambiguation_lock
 )
 from core.nlu import (
@@ -37,6 +40,56 @@ from core.iptv import (
 )
 from core.kinopoisk import resolve_via_kinopoisk, resolve_user_choice
 from core.playback import launch_on_projector, async_search_and_play
+
+
+def is_safe_ip(ip_str):
+    try:
+        ip = ipaddress.ip_address(ip_str)
+        if (ip.is_loopback or ip.is_private or ip.is_link_local or 
+            ip.is_reserved or ip.is_multicast or ip.is_unspecified):
+            return False
+        # Защита от диапазона CGNAT / Tailscale (100.64.0.0/10)
+        if isinstance(ip, ipaddress.IPv4Address) and ip in ipaddress.ip_network('100.64.0.0/10'):
+            return False
+        return True
+    except ValueError:
+        return False
+
+def validate_upstream_url(url_str):
+    """
+    Проверяет URL на безопасность от SSRF:
+    - Разрешены только протоколы http и https
+    - Домен разрешается через DNS в IP
+    - Все IP проверяются на приватные, loopback и служебные диапазоны
+    """
+    try:
+        parsed = urllib.parse.urlparse(url_str)
+        if parsed.scheme not in ('http', 'https'):
+            return False, "Invalid URL scheme"
+        hostname = (parsed.hostname or '').rstrip('.')
+        if not hostname or hostname.lower() == 'localhost':
+            return False, "Access to localhost prohibited"
+        port = parsed.port or (443 if parsed.scheme == 'https' else 80)
+        addr_infos = socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+        if not addr_infos:
+            return False, "Could not resolve host"
+        for info in addr_infos:
+            ip_str = info[4][0]
+            if not is_safe_ip(ip_str):
+                return False, f"Resolved IP {ip_str} is private or internal"
+        return True, None
+    except Exception as e:
+        return False, str(e)
+
+class SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Предотвращает SSRF через HTTP-редиректы на локальные/приватные ресурсы."""
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        is_safe, reason = validate_upstream_url(newurl)
+        if not is_safe:
+            raise urllib.error.HTTPError(newurl, 403, f"Blocked unsafe redirect: {reason}", headers, fp)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+safe_opener = urllib.request.build_opener(SafeRedirectHandler)
 
 
 class YandexDialogsHandler(BaseHTTPRequestHandler):
@@ -55,17 +108,11 @@ class YandexDialogsHandler(BaseHTTPRequestHandler):
         self.serve_iptv_upstream(info['url'], info['referer'], host)
 
     def serve_iptv_upstream(self, target_url, ref, host):
-        p_url = urllib.parse.urlparse(target_url)
-        if p_url.scheme not in ('http', 'https'):
-            self.send_response(400)
-            self.end_headers()
-            self.wfile.write(b'{"error": "Invalid URL scheme"}')
-            return
-        hostname = (p_url.hostname or '').lower()
-        if hostname in ('localhost', '127.0.0.1', '0.0.0.0', '::1') or hostname.startswith('192.168.') or hostname.startswith('10.'):
+        is_safe, err_msg = validate_upstream_url(target_url)
+        if not is_safe:
             self.send_response(403)
             self.end_headers()
-            self.wfile.write(b'{"error": "Access to local network prohibited"}')
+            self.wfile.write(f'{{"error": "Access prohibited: {err_msg}"}}'.encode('utf-8'))
             return
 
         headers = {'User-Agent': 'Mozilla/5.0'}
@@ -73,7 +120,7 @@ class YandexDialogsHandler(BaseHTTPRequestHandler):
             headers['Referer'] = ref
         try:
             req = urllib.request.Request(target_url, headers=headers)
-            with urllib.request.urlopen(req, timeout=8) as resp:
+            with safe_opener.open(req, timeout=8) as resp:
                 content_type = resp.headers.get('Content-Type', '')
                 if 'mpegurl' in content_type or target_url.endswith('.m3u8'):
                     body = resp.read().decode('utf-8', errors='ignore')
