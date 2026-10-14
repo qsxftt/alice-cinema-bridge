@@ -113,7 +113,7 @@ def resolve_via_kinopoisk(query):
                     is_unreleased = True
                 elif premiere and str(premiere)[:10] > today_iso:
                     is_unreleased = True
-                elif (d.get('premiere') or {}).get('world') and not (d.get('premiere') or {}).get('bluray') and not (d.get('premiere') or {}).get('dvd') and year and int(year) >= 2025:
+                elif (d.get('premiere') or {}).get('world') and not (d.get('premiere') or {}).get('bluray') and not (d.get('premiere') or {}).get('dvd') and year and int(year) >= current_year:
                     is_unreleased = True
                     
                 candidates.append({

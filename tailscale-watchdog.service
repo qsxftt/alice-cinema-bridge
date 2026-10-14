@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 User=root
-ExecStart=/home/danil/cinema_bridge/tailscale_watchdog.sh
+ExecStart=/usr/local/bin/tailscale_watchdog.sh
 StandardOutput=journal
 StandardError=journal
 

@@ -11,7 +11,7 @@ import threading
 import urllib.request
 import urllib.parse
 
-from core.config import SERVER_LAN_IP, SERVER_PORT, PROXY_CHANNELS, TV_CACHE_FILE
+from core.config import SERVER_LAN_IP, SERVER_PORT, SECRET_TOKEN, PROXY_CHANNELS, TV_CACHE_FILE
 from core.nlu import clean_movie_query
 
 TV_CHANNELS = {
@@ -89,12 +89,12 @@ TV_CHANNELS = {
     'karusel': {
         'display_name': 'Карусель',
         'streams': [
-            f"http://{SERVER_LAN_IP}:{SERVER_PORT}/iptv/karusel.m3u8",
+            f"http://{SERVER_LAN_IP}:{SERVER_PORT}/iptv/karusel.m3u8?secret={SECRET_TOKEN}",
             'http://flussonic.linkintel.ru/Karusel/index.m3u8',
             'https://stream.smotrim.ru/hls2/karusel/playlist_3.m3u8',
             'http://185.37.150.46/Karusel/index.m3u8'
         ],
-        'active_stream': f"http://{SERVER_LAN_IP}:{SERVER_PORT}/iptv/karusel.m3u8",
+        'active_stream': f"http://{SERVER_LAN_IP}:{SERVER_PORT}/iptv/karusel.m3u8?secret={SECRET_TOKEN}",
         'aliases': ['карусель', 'детский', 'каруселька', 'карусельку']
     },
     'otr': {
@@ -123,12 +123,12 @@ TV_CHANNELS = {
     'ren': {
         'display_name': 'РЕН ТВ',
         'streams': [
-            f"http://{SERVER_LAN_IP}:{SERVER_PORT}/iptv/ren.m3u8",
+            f"http://{SERVER_LAN_IP}:{SERVER_PORT}/iptv/ren.m3u8?secret={SECRET_TOKEN}",
             'http://flussonic.linkintel.ru/ren_tv/index.m3u8',
             'http://185.23.80.23:8080/REN/index.m3u8',
             'http://194.152.35.17/ren_tv/index.m3u8'
         ],
-        'active_stream': f"http://{SERVER_LAN_IP}:{SERVER_PORT}/iptv/ren.m3u8",
+        'active_stream': f"http://{SERVER_LAN_IP}:{SERVER_PORT}/iptv/ren.m3u8?secret={SECRET_TOKEN}",
         'aliases': ['рен', 'рен тв', 'рен-тв', 'рентв']
     },
     'spas': {
@@ -320,7 +320,8 @@ def get_channel_stream(ch_dict):
             save_tv_cache()
             return s
 
-    return streams[0] if streams else ""
+    print(f"❌ Ни один резервный поток для «{ch_dict['display_name']}» не отвечает.", flush=True)
+    return None
 
 def update_tv_from_github():
     """
@@ -434,12 +435,12 @@ def rewrite_m3u8(base_url, m3u8_text, ref_url, server_host):
             def replace_tag_uri(m):
                 u = m.group(1)
                 abs_u = resolve_upstream_url(base_url, u)
-                proxied = f"http://{server_host}/iptv/proxy?url={urllib.parse.quote(abs_u)}&ref={urllib.parse.quote(ref_url)}"
+                proxied = f"http://{server_host}/iptv/proxy?url={urllib.parse.quote(abs_u)}&ref={urllib.parse.quote(ref_url)}&secret={SECRET_TOKEN}"
                 return f'URI="{proxied}"'
             line = re.sub(r'URI="([^"]+)"', replace_tag_uri, line)
             lines.append(line)
         else:
             abs_u = resolve_upstream_url(base_url, line)
-            proxied = f"http://{server_host}/iptv/proxy?url={urllib.parse.quote(abs_u)}&ref={urllib.parse.quote(ref_url)}"
+            proxied = f"http://{server_host}/iptv/proxy?url={urllib.parse.quote(abs_u)}&ref={urllib.parse.quote(ref_url)}&secret={SECRET_TOKEN}"
             lines.append(proxied)
     return "\n".join(lines)

@@ -55,6 +55,19 @@ class YandexDialogsHandler(BaseHTTPRequestHandler):
         self.serve_iptv_upstream(info['url'], info['referer'], host)
 
     def serve_iptv_upstream(self, target_url, ref, host):
+        p_url = urllib.parse.urlparse(target_url)
+        if p_url.scheme not in ('http', 'https'):
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(b'{"error": "Invalid URL scheme"}')
+            return
+        hostname = (p_url.hostname or '').lower()
+        if hostname in ('localhost', '127.0.0.1', '0.0.0.0', '::1') or hostname.startswith('192.168.') or hostname.startswith('10.'):
+            self.send_response(403)
+            self.end_headers()
+            self.wfile.write(b'{"error": "Access to local network prohibited"}')
+            return
+
         headers = {'User-Agent': 'Mozilla/5.0'}
         if ref:
             headers['Referer'] = ref
@@ -100,6 +113,12 @@ class YandexDialogsHandler(BaseHTTPRequestHandler):
         qs = urllib.parse.parse_qs(parsed.query)
         host = self.headers.get('Host', f"{SERVER_LAN_IP}:{SERVER_PORT}")
 
+        if not self.check_auth():
+            self.send_response(403)
+            self.end_headers()
+            self.wfile.write(b'{"error": "Forbidden"}')
+            return
+
         # IPTV Stream Proxy (для локальных плееров)
         if parsed.path == '/iptv/ren.m3u8':
             self.serve_iptv_channel('ren', host)
@@ -115,12 +134,6 @@ class YandexDialogsHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 return
             self.serve_iptv_upstream(target_url, ref, host)
-            return
-
-        if not self.check_auth():
-            self.send_response(403)
-            self.end_headers()
-            self.wfile.write(b'{"error": "Forbidden"}')
             return
 
         # Переключение целевого экрана (проектор / пк)
@@ -173,6 +186,11 @@ class YandexDialogsHandler(BaseHTTPRequestHandler):
             return
 
         content_length = int(self.headers.get('Content-Length', 0))
+        if content_length > 65536:
+            self.send_response(413)
+            self.end_headers()
+            self.wfile.write(b'{"error": "Payload Too Large"}')
+            return
         raw_body = self.rfile.read(content_length).decode('utf-8', errors='ignore')
         
         try:
@@ -231,7 +249,7 @@ class YandexDialogsHandler(BaseHTTPRequestHandler):
         new_pending_data = None
 
         # Если в активном диалоге пришла новая команда на включение — сбрасываем старый контекст
-        if pending_data and bool(urllib.parse.re.search(r'\b(включ|постав|запуст|покаж|найд|попроси|вруб|ютуб|youtube|ютюб)\b', command.lower())):
+        if pending_data and bool(re.search(r'\b(включ[а-я]*|постав[а-я]*|запуст[а-я]*|покаж[а-я]*|найд[а-я]*|попроси[а-я]*|вруб[а-я]*|ютуб|youtube|ютюб)\b', command.lower())):
             with disambiguation_lock:
                 active_disambiguations.pop(session_id, None)
             pending_data = None
@@ -321,40 +339,50 @@ class YandexDialogsHandler(BaseHTTPRequestHandler):
                     print(f"📺 Запрос YouTube: «{yt_query}» -> {search_url}", flush=True)
                     response_text = f"Ищу «{yt_query}» на YouTube на {target_device_name}. Выбирай!"
                     end_session = True
-                    set_pending_playback({
-                        "action": "play",
-                        "type": "youtube",
-                        "title": f"YouTube: {yt_query}",
-                        "url": search_url,
-                        "timestamp": time.time()
-                    })
-                    threading.Thread(target=launch_on_projector, args=(search_url,), daemon=True).start()
+                    if curr_target == 'pc':
+                        set_pending_playback({
+                            "action": "play",
+                            "type": "youtube",
+                            "title": f"YouTube: {yt_query}",
+                            "url": search_url,
+                            "timestamp": time.time()
+                        })
+                    else:
+                        threading.Thread(target=launch_on_projector, args=(search_url,), daemon=True).start()
                 else:
                     print("📺 Запуск главного экрана YouTube", flush=True)
                     response_text = f"Открываю YouTube на {target_device_name}."
                     end_session = True
-                    set_pending_playback({
-                        "action": "play",
-                        "type": "youtube",
-                        "title": "YouTube",
-                        "url": "https://www.youtube.com",
-                        "timestamp": time.time()
-                    })
-                    threading.Thread(target=launch_on_projector, args=("https://www.youtube.com",), daemon=True).start()
+                    if curr_target == 'pc':
+                        set_pending_playback({
+                            "action": "play",
+                            "type": "youtube",
+                            "title": "YouTube",
+                            "url": "https://www.youtube.com",
+                            "timestamp": time.time()
+                        })
+                    else:
+                        threading.Thread(target=launch_on_projector, args=("https://www.youtube.com",), daemon=True).start()
             elif is_tv:
                 stream_url = get_channel_stream(tv_ch)
-                print(f"📺 Запрос ТВ-канала: «{tv_ch['display_name']}» -> {stream_url}", flush=True)
-                response_text = f"Включаю телеканал {tv_ch['display_name']} на {target_device_name}."
-                end_session = True
-                set_pending_playback({
-                    "action": "play",
-                    "type": "tv",
-                    "title": tv_ch['display_name'],
-                    "url": stream_url,
-                    "direct_url": stream_url,
-                    "timestamp": time.time()
-                })
-                threading.Thread(target=launch_on_projector, args=(stream_url,), daemon=True).start()
+                if not stream_url:
+                    response_text = f"К сожалению, прямой эфир канала {tv_ch['display_name']} сейчас недоступен."
+                    end_session = True
+                else:
+                    print(f"📺 Запрос ТВ-канала: «{tv_ch['display_name']}» -> {stream_url}", flush=True)
+                    response_text = f"Включаю телеканал {tv_ch['display_name']} на {target_device_name}."
+                    end_session = True
+                    if curr_target == 'pc':
+                        set_pending_playback({
+                            "action": "play",
+                            "type": "tv",
+                            "title": tv_ch['display_name'],
+                            "url": stream_url,
+                            "direct_url": stream_url,
+                            "timestamp": time.time()
+                        })
+                    else:
+                        threading.Thread(target=launch_on_projector, args=(stream_url,), daemon=True).start()
             else:
                 # 3. Фильм или сериал
                 target_voiceover, cleaned_cmd = extract_voiceover(command)

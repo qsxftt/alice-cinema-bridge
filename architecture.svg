@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 450" width="1020" height="450" style="background:#ffffff; font-family:'trebuchet ms', verdana, arial, sans-serif;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#333333"/>
+    </marker>
+    <marker id="arrowDashed" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#666666"/>
+    </marker>
+  </defs>
+
+  <!-- Clean White Canvas -->
+  <rect width="1020" height="450" fill="#ffffff"/>
+
+  <!-- ==================== SUBGRAPH 1: INGRESS ==================== -->
+  <rect x="20" y="30" width="230" height="390" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="35" y="55" fill="#475569" font-size="12" font-weight="700">1. Голос и доставка</text>
+
+  <!-- User Pill -->
+  <rect x="35" y="75" width="200" height="65" rx="20" fill="#ECECFF" stroke="#9370DB" stroke-width="1.2"/>
+  <text x="135" y="102" text-anchor="middle" fill="#333333" font-size="12" font-weight="600">🗣️ Голосовая команда</text>
+  <text x="135" y="122" text-anchor="middle" fill="#555555" font-size="11">«Пацаны 2 сезон в Кубике»</text>
+
+  <!-- Arrow User -> Alice -->
+  <path d="M 135 140 L 135 180" stroke="#333333" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Alice Pill -->
+  <rect x="35" y="180" width="200" height="65" rx="20" fill="#ECECFF" stroke="#9370DB" stroke-width="1.2"/>
+  <text x="135" y="208" text-anchor="middle" fill="#333333" font-size="13" font-weight="700">Яндекс Станция</text>
+  <text x="135" y="228" text-anchor="middle" fill="#555555" font-size="11">Приватный навык</text>
+
+  <!-- Arrow Alice -> Tailscale -->
+  <path d="M 135 245 L 135 285" stroke="#333333" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+  <rect x="90" y="255" width="90" height="18" rx="3" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="135" y="268" text-anchor="middle" fill="#666666" font-size="10">HTTPS Webhook</text>
+
+  <!-- Tailscale Rect -->
+  <rect x="35" y="285" width="200" height="65" rx="5" fill="#ECECFF" stroke="#9370DB" stroke-width="1.2"/>
+  <text x="135" y="312" text-anchor="middle" fill="#333333" font-size="13" font-weight="700">Tailscale Funnel</text>
+  <text x="135" y="332" text-anchor="middle" fill="#555555" font-size="11">Белый HTTPS шлюз</text>
+
+  <!-- Arrow Ingress -> Server -->
+  <path d="M 235 317 L 280 317" stroke="#333333" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- ==================== SUBGRAPH 2: HOME SERVER ==================== -->
+  <rect x="280" y="30" width="460" height="390" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="295" y="55" fill="#475569" font-size="12" font-weight="700">2. Домашний сервер (Python Webhook Bridge)</text>
+
+  <!-- Step 1: NLU -->
+  <rect x="300" y="75" width="420" height="48" rx="5" fill="#ECECFF" stroke="#9370DB" stroke-width="1.2"/>
+  <text x="315" y="98" fill="#333333" font-size="12.5" font-weight="700">core/nlu: Парсер живой речи</text>
+  <text x="315" y="113" fill="#555555" font-size="11">Студия «Кубик в кубе», Сезон 2, Серия 4, чистка предлогов</text>
+
+  <!-- Arrow 1 -> 2 -->
+  <path d="M 510 123 L 510 138" stroke="#333333" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Step 2: Kinopoisk -->
+  <rect x="300" y="138" width="420" height="48" rx="5" fill="#ECECFF" stroke="#9370DB" stroke-width="1.2"/>
+  <text x="315" y="161" fill="#333333" font-size="12.5" font-weight="700">core/kinopoisk: API Кинопоиска</text>
+  <text x="315" y="176" fill="#555555" font-size="11">Каноничное имя, английский тайтл «The Boys», год 2019</text>
+
+  <!-- Arrow 2 -> 3 -->
+  <path d="M 510 186 L 510 201" stroke="#333333" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Step 3: Prowlarr -->
+  <rect x="300" y="201" width="420" height="48" rx="5" fill="#ECECFF" stroke="#9370DB" stroke-width="1.2"/>
+  <text x="315" y="224" fill="#333333" font-size="12.5" font-weight="700">core/torrents: Поиск через Prowlarr</text>
+  <text x="315" y="239" fill="#555555" font-size="11">Поиск по трекерам (RuTracker, Rutor, NNMClub) ➔ 30+ раздач</text>
+
+  <!-- Arrow 3 -> 4 -->
+  <path d="M 510 249 L 510 264" stroke="#333333" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Step 4: Scoring -->
+  <rect x="300" y="264" width="420" height="50" rx="5" fill="#ECECFF" stroke="#9370DB" stroke-width="1.2"/>
+  <text x="315" y="286" fill="#333333" font-size="12.5" font-weight="700">Скоринг и выбор раздачи</text>
+  <text x="315" y="302" fill="#555555" font-size="11">+100 за Кубик | Макс. сидеры | Фильтр CAMRip и 80 ГБ 4K ➔ 1080p</text>
+
+  <!-- Arrow 4 -> 5 -->
+  <path d="M 510 314 L 510 329" stroke="#333333" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Step 5: TorrServer -->
+  <rect x="300" y="329" width="420" height="55" rx="5" fill="#ECECFF" stroke="#9370DB" stroke-width="1.2"/>
+  <text x="315" y="352" fill="#333333" font-size="12.5" font-weight="700">core/playback: TorrServer (стрим в RAM)</text>
+  <text x="315" y="369" fill="#555555" font-size="11">Индексация пака раздачи, поиск s02e04 и отдача HTTP потока</text>
+
+  <!-- ==================== SUBGRAPH 3: OUTPUTS ==================== -->
+  <rect x="770" y="30" width="230" height="390" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="785" y="55" fill="#475569" font-size="12" font-weight="700">3. Воспроизведение</text>
+
+  <!-- Arrow Control: Server -> Projector -->
+  <path d="M 720 100 Q 755 100 755 125 L 790 125" stroke="#333333" stroke-width="1.2" stroke-dasharray="4 3" fill="none" marker-end="url(#arrowDashed)"/>
+  <rect x="715" y="85" width="115" height="18" rx="3" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="772" y="98" text-anchor="middle" fill="#475569" font-size="10">Remote v2 :6466</text>
+
+  <!-- Arrow Stream: TorrServer -> Projector -->
+  <path d="M 720 356 Q 765 356 765 240 L 790 200" stroke="#333333" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <rect x="715" y="270" width="105" height="18" rx="3" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="767" y="283" text-anchor="middle" fill="#475569" font-size="10">HTTP поток :8090</text>
+
+  <!-- Target 1: Projector -->
+  <rect x="790" y="115" width="190" height="105" rx="5" fill="#ECECFF" stroke="#9370DB" stroke-width="1.2"/>
+  <text x="885" y="142" text-anchor="middle" fill="#333333" font-size="13" font-weight="700">📽️ Проектор Android TV</text>
+  <text x="885" y="162" text-anchor="middle" fill="#2563eb" font-size="12" font-weight="600">Vimu Media Player</text>
+  <text x="885" y="184" text-anchor="middle" fill="#555555" font-size="11">• Пробуждение экрана</text>
+  <text x="885" y="202" text-anchor="middle" fill="#555555" font-size="11">• Запуск по vimu:play</text>
+
+  <!-- Arrow TorrServer -> PC -->
+  <path d="M 720 370 L 790 355" stroke="#666666" stroke-width="1.2" stroke-dasharray="4 3" fill="none" marker-end="url(#arrowDashed)"/>
+
+  <!-- Target 2: PC -->
+  <rect x="790" y="295" width="190" height="85" rx="5" fill="#ECECFF" stroke="#9370DB" stroke-width="1.2"/>
+  <text x="885" y="325" text-anchor="middle" fill="#333333" font-size="13" font-weight="700">💻 Экран ПК / Ноутбук</text>
+  <text x="885" y="347" text-anchor="middle" fill="#555555" font-size="11.5">VLC Fullscreen</text>
+  <text x="885" y="367" text-anchor="middle" fill="#64748b" font-size="10.5">«Алиса, экран комп»</text>
+
+</svg>

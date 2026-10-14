@@ -123,7 +123,9 @@ def find_target_video_file(video_files, target_season=None, target_episode=None)
         if 1 <= target_episode <= len(video_files):
             return video_files[target_episode - 1]
 
-    return video_files[0]
+    if target_season or target_episode:
+        return None
+    return video_files[0] if video_files else None
 
 def get_torrent_playback_info(t_hash, target_season=None, target_episode=None):
     video_exts = ('.mkv', '.mp4', '.avi', '.ts', '.m2ts')
@@ -158,7 +160,7 @@ def get_torrent_playback_info(t_hash, target_season=None, target_episode=None):
         except Exception:
             pass
         time.sleep(0.5)
-    return False, [], {'id': 1}
+    return False, [], None
 
 def launch_on_projector(stream_url):
     if get_playback_target() == "pc":
@@ -263,26 +265,31 @@ def play_on_torrserver(movie_name, release, target_season=None, target_episode=N
             threading.Thread(target=cleanup_inactive_torrents, args=(t_hash,), daemon=True).start()
             
             is_series, video_files, chosen_file = get_torrent_playback_info(t_hash, target_season, target_episode)
+            if not chosen_file:
+                print(f"⚠️ [TorrServer] Запрошенная серия/файл не найдены в раздаче {t_hash}", flush=True)
+                return None
             
             if is_series:
-                chosen_id = chosen_file.get('id', 1) if chosen_file else 1
+                chosen_id = chosen_file.get('id', 1)
                 stream_url = f"{TORRSERVER_URL}/playlist/playlist.m3u?hash={t_hash}&index={chosen_id}"
                 print(f"📺 Ссылка на плейлист сериала готова ({len(video_files)} серий, старт с ID {chosen_id}): {stream_url}", flush=True)
             else:
-                file_index = chosen_file.get('id', 1) if chosen_file else 1
-                stream_url = f"{TORRSERVER_URL}/stream/movie.mkv?link={t_hash}&index={file_index}&play"
+                chosen_id = chosen_file.get('id', 1)
+                stream_url = f"{TORRSERVER_URL}/stream/movie.mkv?link={t_hash}&index={chosen_id}&play"
                 print(f"🎬 Ссылка на поток фильма готова: {stream_url}", flush=True)
                 
             direct_url = f"{TORRSERVER_URL}/stream/movie.mkv?link={t_hash}&index={chosen_id}&play" if is_series else stream_url
-            set_pending_playback({
-                "action": "play",
-                "type": "series" if is_series else "movie",
-                "title": movie_name,
-                "url": stream_url,
-                "direct_url": direct_url,
-                "timestamp": time.time()
-            })
-            threading.Thread(target=launch_on_projector, args=(stream_url,), daemon=True).start()
+            if get_playback_target() == "pc":
+                set_pending_playback({
+                    "action": "play",
+                    "type": "series" if is_series else "movie",
+                    "title": movie_name,
+                    "url": stream_url,
+                    "direct_url": direct_url,
+                    "timestamp": time.time()
+                })
+            else:
+                threading.Thread(target=launch_on_projector, args=(stream_url,), daemon=True).start()
             return stream_url
     except Exception as e:
         print(f"❌ Ошибка TorrServer: {e}", flush=True)

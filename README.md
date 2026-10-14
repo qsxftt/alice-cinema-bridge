@@ -13,6 +13,13 @@
 
 ## 📐 Архитектура системы
 
+<p align="center">
+  <img src="architecture.svg" alt="Архитектура Alice Cinema Bridge" width="100%">
+</p>
+
+<details>
+<summary>Показать Mermaid схему</summary>
+
 ```mermaid
 flowchart TD
     User([🗣️ Голос: «Включи сериал Пацаны в Кубике»]) --> Alice([Яндекс Станция / Алиса])
@@ -35,6 +42,7 @@ flowchart TD
         CinemaBridge -.->|REST /poll| PC[💻 ПК / Ноутбук: VLC Fullscreen]
     end
 ```
+</details>
 
 ---
 

@@ -38,8 +38,8 @@ def extract_seasons_from_title(title):
         if 1 <= s_val <= e_val <= 50:
             seasons.update(range(s_val, e_val + 1))
 
-    # 3. Диапазоны вида "01-08 из 08", "[01-08 из 8]"
-    iz_matches = re.findall(r'(\d{1,2})\s*[-–—]\s*(\d{1,2})\s+из\s+\d{1,2}', t_clean)
+    # 3. Диапазоны сезонов вида "сезоны 01-03 из 05" (без слова сезон 'из' означает серии)
+    iz_matches = re.findall(r'сезон(?:ы|а)?\s*[:\(\[]?\s*(\d{1,2})\s*[-–—]\s*(\d{1,2})\s+из\s+\d{1,2}', t_clean)
     for start, end in iz_matches:
         s_val, e_val = int(start), int(end)
         if 1 <= s_val <= e_val <= 50:
@@ -194,6 +194,8 @@ def search_prowlarr_releases(query_term, is_series=False, target_voiceover=None)
             continue
         download_url = item.get('downloadUrl') or item.get('magnetUrl') or item.get('guid')
         if not download_url:
+            continue
+        if item.get('seeders', 0) <= 0:
             continue
         item['download_url'] = download_url
         item['score'] = score_release(item, is_series=is_series, target_voiceover=target_voiceover)
