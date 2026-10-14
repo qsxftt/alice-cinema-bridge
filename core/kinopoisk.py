@@ -104,16 +104,22 @@ def resolve_via_kinopoisk(query):
                 votes = (d.get('votes') or {}).get('kp') or 0
                 m_type = d.get('type')
                 status = (d.get('status') or '').lower()
-                premiere = (d.get('premiere') or {}).get('world') or (d.get('premiere') or {}).get('russia')
+                prem = d.get('premiere') or {}
+                
+                # Собираем все известные даты премьер (кинотеатры, мир, Россия, цифра)
+                prem_dates = [
+                    str(p)[:10] for p in [
+                        prem.get('world'), prem.get('russia'),
+                        prem.get('digital'), prem.get('cinema')
+                    ] if p and len(str(p)) >= 10
+                ]
                 
                 is_unreleased = False
                 if status in ('announced', 'filming', 'post-production', 'pre-production'):
                     is_unreleased = True
                 elif year and int(year) > current_year:
                     is_unreleased = True
-                elif premiere and str(premiere)[:10] > today_iso:
-                    is_unreleased = True
-                elif (d.get('premiere') or {}).get('world') and not (d.get('premiere') or {}).get('bluray') and not (d.get('premiere') or {}).get('dvd') and year and int(year) >= current_year:
+                elif prem_dates and all(p > today_iso for p in prem_dates):
                     is_unreleased = True
                     
                 candidates.append({
